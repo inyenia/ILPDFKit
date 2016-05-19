@@ -56,7 +56,16 @@
     if (self != nil) {
         _dictionary = leaf;
         id value = [leaf inheritableValueForKey:@"V"];
-        _value = [value isKindOfClass:PDFString.class] ? [value textString]:value;
+		_value = [value isKindOfClass:PDFString.class] ? [value textString]:value;
+		if (_value.length == 0) {
+			CGPDFDictionaryRef aDict = leaf.dict;
+			CGPDFStringRef objectString;
+			if(CGPDFDictionaryGetString(aDict, "V", &objectString)) {
+				NSString *tempStr = (NSString *)CFBridgingRelease(CGPDFStringCopyTextString(objectString));
+				NSLog(@"V %@", tempStr);
+				_value = tempStr;
+			}
+		}
         id defaultValue = [leaf inheritableValueForKey:@"DV"];
         _defaultValue = ([defaultValue isKindOfClass:PDFString.class]) ? [defaultValue textString]:defaultValue;
         NSMutableArray *nameComponents = [NSMutableArray array];
