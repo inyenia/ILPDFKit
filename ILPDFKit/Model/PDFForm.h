@@ -220,8 +220,9 @@ typedef NS_ENUM(NSUInteger, PDFFormType) {
 /** Renders the view in vector graphics within a PDF context.
  @param ctx The PDF context to render into.
  @param rect The rectangle to render on.
+ @param font to use.
  */
-- (void)vectorRenderInPDFContext:(CGContextRef)ctx forRect:(CGRect)rect;
+- (void)vectorRenderInPDFContext:(CGContextRef)ctx forRect:(CGRect)rect font:(UIFont *)font;
 
 /** Returns a view to represent the form.
  

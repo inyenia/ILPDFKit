@@ -26,6 +26,7 @@
 #import "PDFFormChoiceField.h"
 #import "PDFFormSignatureField.h"
 #import "PDFFormContainer.h"
+#import <CoreText/CoreText.h>
 
 @interface PDFForm(Delegates) <PDFWidgetAnnotationViewDelegate>
 @end
@@ -244,16 +245,22 @@
 
 #pragma mark - Rendering
 
-- (void)vectorRenderInPDFContext:(CGContextRef)ctx forRect:(CGRect)rect {
+- (void)vectorRenderInPDFContext:(CGContextRef)ctx forRect:(CGRect)rect font:(UIFont *)font
+{
     if (self.formType == PDFFormTypeText || self.formType == PDFFormTypeChoice) {
         NSString *text = self.value;
-        UIFont *font = [UIFont systemFontOfSize:[PDFWidgetAnnotationView fontSizeForRect:rect value:self.value multiline:((_flags & PDFFormFlagTextFieldMultiline) > 0 && self.formType == PDFFormTypeText) choice:self.formType == PDFFormTypeChoice]];
-        UIGraphicsPushContext(ctx);
+		UIGraphicsPushContext(ctx);
         NSMutableParagraphStyle *paragraphStyle = [[NSMutableParagraphStyle defaultParagraphStyle] mutableCopy];
         paragraphStyle.lineBreakMode = NSLineBreakByWordWrapping;
         paragraphStyle.alignment = self.textAlignment;
+		if (!font) {
+			font = [UIFont systemFontOfSize:[PDFWidgetAnnotationView fontSizeForRect:rect value:self.value multiline:((_flags & PDFFormFlagTextFieldMultiline) > 0 && self.formType == PDFFormTypeText) choice:self.formType == PDFFormTypeChoice]];
+		}
+		NSString *fontName = font.fontName;
+		CGFloat fontSize = font.pointSize;
+		NSLog(@"Font name: %@", font);
         [text drawInRect:CGRectMake(0, 0, rect.size.width, rect.size.height*2.0) withAttributes:@{NSFontAttributeName:font,NSParagraphStyleAttributeName: paragraphStyle}];
-        UIGraphicsPopContext();
+		UIGraphicsPopContext();
     } else if (self.formType == PDFFormTypeButton) {
         [PDFFormButtonField drawWithRect:rect context:ctx back:NO selected:[self.value isEqualToString:self.exportValue] && (_flags & PDFFormFlagButtonPushButton) == 0 radio:(_flags & PDFFormFlagButtonRadio) > 0];
     }
