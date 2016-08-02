@@ -160,10 +160,32 @@
         CGContextSaveGState(ctx);
         CGFloat margin = minDim/3;
         if (radio) {
-            CGContextSetFillColorWithColor(ctx, [UIColor blackColor].CGColor);
-            CGContextTranslateCTM(ctx, rect.origin.x, rect.origin.y);
-            CGContextAddEllipseInRect(ctx, CGRectMake(margin, margin, rect.size.width-2*margin, rect.size.height-2*margin));
-            CGContextFillPath(ctx);
+			
+			CGContextSetRGBFillColor(ctx, 255.0, 255.0, 255.0, 1.0);
+			CGContextFillRect(ctx, rect);
+			
+			CGContextSetLineWidth(ctx, 1);
+			CGContextStrokeRect(ctx, rect);
+			
+			CGContextSetLineCap(ctx,kCGLineCapRound);
+			CGContextSetStrokeColorWithColor(ctx, [UIColor blackColor].CGColor);
+			
+			CGContextSetLineWidth(ctx, 0.5);
+			
+			CGContextMoveToPoint(ctx, rect.origin.x + (rect.size.width/2), rect.origin.y + (rect.size.height/2));
+			CGContextAddLineToPoint(ctx, rect.origin.x, rect.origin.y);
+			
+			CGContextMoveToPoint(ctx, rect.origin.x + (rect.size.width/2), rect.origin.y + (rect.size.height/2));
+			CGContextAddLineToPoint(ctx, rect.origin.x, rect.origin.y + rect.size.height);
+			
+			CGContextMoveToPoint(ctx, rect.origin.x + (rect.size.width/2), rect.origin.y + (rect.size.height/2));
+			CGContextAddLineToPoint(ctx, rect.origin.x + rect.size.width, rect.origin.y + rect.size.height);
+			
+			CGContextMoveToPoint(ctx, rect.origin.x + (rect.size.width/2), rect.origin.y + (rect.size.height/2));
+			CGContextAddLineToPoint(ctx, rect.origin.x + rect.size.width, rect.origin.y);
+			
+			CGContextStrokePath(ctx);
+			
         } else {
             CGContextTranslateCTM(ctx, rect.origin.x, rect.origin.y);
             CGContextSetLineWidth(ctx, rect.size.width/8);
@@ -175,7 +197,21 @@
             CGContextStrokePath(ctx);
         }
         CGContextRestoreGState(ctx);
-    }
+	}else{
+		CGContextSaveGState(ctx);
+		CGFloat margin = minDim/3;
+		CGContextSetRGBFillColor(ctx, 255.0, 255.0, 255.0, 1.0);
+		CGContextFillRect(ctx, rect);
+			
+		CGContextSetLineWidth(ctx, 1);
+		CGContextStrokeRect(ctx, rect);
+			
+		CGContextSetLineCap(ctx,kCGLineCapRound);
+		CGContextSetStrokeColorWithColor(ctx, [UIColor blackColor].CGColor);
+			
+		CGContextStrokePath(ctx);
+		CGContextRestoreGState(ctx);
+	}
 }
 
 @end

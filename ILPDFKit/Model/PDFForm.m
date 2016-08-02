@@ -88,7 +88,7 @@
             }
         }
         self.options = [NSArray arrayWithArray:temp];
-        
+
         if ([formTypeString isEqualToString:@"Btn"]) {
             _formType = PDFFormTypeButton;
         } else if([formTypeString isEqualToString:@"Tx"]) {
@@ -98,7 +98,7 @@
         } else if([formTypeString isEqualToString:@"Sig"]) {
             _formType = PDFFormTypeSignature;
         }
-        
+
         NSMutableArray *tempRect = [NSMutableArray array];
         for (NSNumber *num in leaf[@"Rect"]) [tempRect addObject:num];
         _rawRect = [NSArray arrayWithArray:tempRect];
@@ -141,7 +141,7 @@
             }
         }
     }
-    
+
     return self;
 }
 
@@ -176,7 +176,7 @@
 
 - (void)updateFlagsString {
     NSString *temp = @"";
-    
+
     if ((_flags & PDFFormFlagReadOnly) > 0) {
         temp = [temp stringByAppendingString:@"-ReadOnly"];
     }
@@ -187,7 +187,7 @@
         temp = [temp stringByAppendingString:@"-NoExport"];
     }
     if (_formType == PDFFormTypeButton) {
-    
+
         if ((_flags & PDFFormFlagButtonNoToggleToOff) > 0) {
             temp = [temp stringByAppendingString:@"-NoToggleToOff"];
         }
@@ -206,7 +206,7 @@
         }
         if ((_flags & PDFFormFlagChoiceFieldSorted) > 0) {
             temp = [temp stringByAppendingString:@"-Sort"];
-        }             
+        }
     } else if(_formType == PDFFormTypeText) {
         if ((_flags & PDFFormFlagTextFieldMultiline) > 0) {
             temp = [temp stringByAppendingString:@"-Multiline"];
@@ -247,7 +247,7 @@
 
 - (void)vectorRenderInPDFContext:(CGContextRef)ctx forRect:(CGRect)rect font:(UIFont *)font
 {
-    if (self.formType == PDFFormTypeText || self.formType == PDFFormTypeChoice) {
+	  if (self.formType == PDFFormTypeText || self.formType == PDFFormTypeChoice){
         NSString *text = self.value;
 		UIGraphicsPushContext(ctx);
         NSMutableParagraphStyle *paragraphStyle = [[NSMutableParagraphStyle defaultParagraphStyle] mutableCopy];
@@ -258,8 +258,7 @@
 		}
 		NSString *fontName = font.fontName;
 		CGFloat fontSize = font.pointSize;
-		NSLog(@"Font name: %@", font);
-        [text drawInRect:CGRectMake(0, 0, rect.size.width, rect.size.height*2.0) withAttributes:@{NSFontAttributeName:font,NSParagraphStyleAttributeName: paragraphStyle}];
+		[text drawInRect:CGRectMake(0, 0, rect.size.width, rect.size.height*2.0) withAttributes:@{NSFontAttributeName:font,NSParagraphStyleAttributeName: paragraphStyle}];
 		UIGraphicsPopContext();
     } else if (self.formType == PDFFormTypeButton) {
         [PDFFormButtonField drawWithRect:rect context:ctx back:NO selected:[self.value isEqualToString:self.exportValue] && (_flags & PDFFormFlagButtonPushButton) == 0 radio:(_flags & PDFFormFlagButtonRadio) > 0];
@@ -284,14 +283,14 @@
      */
     CGFloat hmargin = ((maxPageWidth-width)/2)*((viewWidth-(2*xmargin))/maxPageWidth)+xmargin;
     CGFloat height = _cropBox.size.height;
-    
+
     //correctedFrame applies to the widgit, not the full PDF window
     CGRect correctedFrame = CGRectMake(_frame.origin.x-_cropBox.origin.x, height-_frame.origin.y-_frame.size.height-_cropBox.origin.y, _frame.size.width, _frame.size.height);
-    
+
     CGFloat realWidth = viewWidth - (2*hmargin);
     CGFloat factor = realWidth/width;
     CGFloat pageOffset = 0;
-    
+
     for (NSUInteger c = 0; c < self.page-1; c++) {
         PDFPage *pg = self.parent.document.pages[c];
         CGFloat iwidth = [pg cropBox].size.width;
@@ -299,25 +298,25 @@
         CGFloat iheight = [pg cropBox].size.height;
         CGFloat irealWidth = viewWidth- (2 * ihmargin);
         CGFloat ifactor = irealWidth/iwidth;
-        
+
         pageOffset+= (iheight * ifactor) + ymargin;
         //DPNote: ymargin is just a constant in the PDFViewController.getMargins.  They are hard coded margins.  I have now hardcoded margins for different devices so they end up in the right place.
     }
-    
+
     _pageFrame =  CGRectIntegral(CGRectMake(correctedFrame.origin.x*factor+hmargin, correctedFrame.origin.y*factor+ymargin, correctedFrame.size.width*factor, correctedFrame.size.height*factor));
-    
+
     if (_formUIElement) {
         _formUIElement = nil;
     }
-    
+
     //A full rendered PDF is really a single "window" or "view".  So we have to manually add offsets and
     // build each UI element as if it was in a single window.
     // _pageFrame represents the frame/rectangle for the current widget
     // _uiBaseFrame represents where a widgit should be located in this larger window.
     // pageOffset represents what needs to be added on the Y axis for this pages origins to be placed properly
-    
+
     _uiBaseFrame = CGRectIntegral(CGRectMake(_pageFrame.origin.x, _pageFrame.origin.y+pageOffset, _pageFrame.size.width, _pageFrame.size.height));
-    
+
     switch (_formType) {
         case PDFFormTypeText:
             _formUIElement = [[PDFFormTextField alloc] initWithFrame:_uiBaseFrame multiline:((_flags & PDFFormFlagTextFieldMultiline) > 0) alignment:_textAlignment secureEntry:((_flags & PDFFormFlagTextFieldPassword) > 0) readOnly:((_flags & PDFFormFlagReadOnly) > 0)];
@@ -345,7 +344,7 @@
         default:
             break;
     }
-    
+
     if (_formUIElement) {
         [_formUIElement setValue:self.value];
         _formUIElement.delegate = self;
@@ -440,8 +439,3 @@
 }
 
 @end
-
-
-
-
-
