@@ -96,6 +96,13 @@ typedef NS_ENUM(NSUInteger, PDFFormType) {
  */
 @property (nonatomic, readonly) CGRect cropBox;
 
+/** The color of the text acro field
+ */
+@property (nonatomic, strong) UIColor *textColor;
+
+/** The font (font size and font type) of the text acro field
+ */
+@property (nonatomic, strong) UIFont *textFont;
 
 /** The media box for the parent PDF page.
  */

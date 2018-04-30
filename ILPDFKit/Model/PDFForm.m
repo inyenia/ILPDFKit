@@ -88,6 +88,9 @@
             }
         }
         self.options = [NSArray arrayWithArray:temp];
+		
+		_textFont = [self fontFromDictionary:leaf];
+		_textColor = [self textColorFromDictionary:leaf];
 
         if ([formTypeString isEqualToString:@"Btn"]) {
             _formType = PDFFormTypeButton;
@@ -247,18 +250,20 @@
 
 - (void)vectorRenderInPDFContext:(CGContextRef)ctx forRect:(CGRect)rect font:(UIFont *)font
 {
-	  if (self.formType == PDFFormTypeText || self.formType == PDFFormTypeChoice){
-        NSString *text = self.value;
+	if (self.formType == PDFFormTypeText || self.formType == PDFFormTypeChoice){
+		NSString *text = self.value;
 		UIGraphicsPushContext(ctx);
         NSMutableParagraphStyle *paragraphStyle = [[NSMutableParagraphStyle defaultParagraphStyle] mutableCopy];
         paragraphStyle.lineBreakMode = NSLineBreakByWordWrapping;
         paragraphStyle.alignment = self.textAlignment;
-		if (!font) {
+		if (_textFont && _textFont.pointSize > 0) {
+			font = _textFont;
+		} else if (!font) {
 			font = [UIFont systemFontOfSize:[PDFWidgetAnnotationView fontSizeForRect:rect value:self.value multiline:((_flags & PDFFormFlagTextFieldMultiline) > 0 && self.formType == PDFFormTypeText) choice:self.formType == PDFFormTypeChoice]];
 		}
 		NSString *fontName = font.fontName;
 		CGFloat fontSize = font.pointSize;
-		[text drawInRect:CGRectMake(0, 0, rect.size.width, rect.size.height*2.0) withAttributes:@{NSFontAttributeName:font,NSParagraphStyleAttributeName: paragraphStyle}];
+		[text drawInRect:CGRectMake(0, 0, rect.size.width, rect.size.height*2.0) withAttributes:@{NSFontAttributeName:font,NSParagraphStyleAttributeName: paragraphStyle, NSForegroundColorAttributeName:_textColor}];
 		UIGraphicsPopContext();
     } else if (self.formType == PDFFormTypeButton) {
         [PDFFormButtonField drawWithRect:rect context:ctx back:NO selected:[self.value isEqualToString:self.exportValue] && (_flags & PDFFormFlagButtonPushButton) == 0 radio:(_flags & PDFFormFlagButtonRadio) > 0];
@@ -355,6 +360,50 @@
 
 }
 
+#pragma mark - PDF fonts
+
+- (UIFont*) fontFromDictionary:(PDFDictionary*)leaf  {
+	UIFont *result = nil;
+	// DA : Default Appearance
+	NSMutableArray *daComponents = [NSMutableArray array];
+	for (PDFString *obj in [[leaf parentValuesForKey:@"DA"] reverseObjectEnumerator]) {
+		[daComponents addObject:[obj textString]];
+	}
+	NSString *daInfo = daComponents.count > 0 ? [daComponents firstObject] : nil; // ej: /Helv 12 Tf 0.25 0.25 0.25 rg
+	NSArray *comps = daInfo ? [daInfo componentsSeparatedByString:@"Tf"] : nil;
+	NSArray *daValues = comps && comps.count > 0 ? [[comps firstObject] componentsSeparatedByString:@" "] : nil;
+	if (daValues.count >= 3) {
+		NSString *daInfo = [daComponents firstObject];
+		daInfo = [daInfo substringFromIndex:1];
+		NSArray *daValues = [daInfo componentsSeparatedByString:@" "];
+		NSString *fontKey = [daValues objectAtIndex:0];
+		NSString *fontSize = [daValues objectAtIndex:1];
+		result = [self fontWithAcroFieldKey:fontKey andSize:fontSize];
+	}
+	return result;
+}
+
+- (UIColor*) textColorFromDictionary:(PDFDictionary*)leaf {
+	UIColor *result = nil;
+	
+	// DA : Default Appearance
+	NSMutableArray *daComponents = [NSMutableArray array];
+	for (PDFString *obj in [[leaf parentValuesForKey:@"DA"] reverseObjectEnumerator]) {
+		[daComponents addObject:[obj textString]];
+	}
+	NSString *daInfo = daComponents.count > 0 ? [daComponents firstObject] : nil; // ej: /Helv 12 Tf 0.25 0.25 0.25 rg
+	
+	NSArray *daValues = daInfo ? [daInfo componentsSeparatedByString:@" "] : nil;
+	if ([daInfo containsString:@"rg"] && [daInfo containsString:@"Tf"] && daValues.count == 7) {
+		NSString *red = [daValues objectAtIndex:3];
+		NSString *green = [daValues objectAtIndex:4];
+		NSString *blue = [daValues objectAtIndex:5];
+		result = [UIColor colorWithRed:[red floatValue] green:[green floatValue] blue:[blue floatValue] alpha:1.0];
+	} else {
+		result = [UIColor blackColor];
+	}
+	return result;
+}
 
 #pragma mark - PDFWidgetAnnotationViewDelegate
 
@@ -436,6 +485,59 @@
         [self removeObserver:_formUIElement forKeyPath:@"options"];
         _formUIElement = nil;
     }
+}
+
+#pragma mark - Font names for AcroFields (AroFields.java), [UIFont familyNames] and [UIFont fontNamesForFamilyName]
+
+- (NSDictionary*) dictionaryWithAcroFieldFonts {
+	NSMutableDictionary *dictionary = [NSMutableDictionary dictionary];
+	[dictionary setObject:@"Courier-BoldOblique" forKey:@"CoBO"];
+	[dictionary setObject:@"Courier-Bold" forKey:@"CoBo"];
+	[dictionary setObject:@"Courier-Oblique" forKey:@"CoOb"];
+	[dictionary setObject:@"Courier" forKey:@"Cour"];
+	[dictionary setObject:@"Helvetica-BoldOblique" forKey:@"HeBO"];
+	[dictionary setObject:@"Helvetica-Bold" forKey:@"HeBo"];
+	[dictionary setObject:@"Helvetica-Oblique" forKey:@"HeOb"];
+	[dictionary setObject:@"Helvetica" forKey:@"Helv"];
+	[dictionary setObject:@"Symbol" forKey:@"Symb"];
+	[dictionary setObject:@"TimesNewRomanPS-BoldItalicMT" forKey:@"TiBI"];
+	[dictionary setObject:@"TimesNewRomanPS-BoldMT" forKey:@"TiBo"];
+	[dictionary setObject:@"TimesNewRomanPS-BoldMT" forKey:@"TiIt"];
+	[dictionary setObject:@"TimesNewRomanPSMT" forKey:@"TiRo"];
+	return dictionary;
+}
+
+- (UIFont*) fontWithAcroFieldKey:(NSString*)key andSize:(NSString*)size {
+	UIFont *result = nil;
+	CGFloat fontSize = [size floatValue];
+	NSDictionary* dictionaryFonts = [self dictionaryWithAcroFieldFonts];
+	if (!result) {
+		// Custom fonts (previosly attached to the project)
+		result = [UIFont fontWithName:key size:fontSize];
+	}
+	if ([[dictionaryFonts allKeys] containsObject:key]) {
+		// Fonts recognized by AcroField standard
+		result = [UIFont fontWithName:[dictionaryFonts objectForKey:key] size:fontSize];
+	}
+	if (!result) {
+		// Fonts recognized by iOS
+		NSArray *nameStyle = [key componentsSeparatedByString:@","];
+		if (nameStyle.count == 2) {
+			NSString *fontFamily = [nameStyle firstObject];
+			NSString *fontStyle = [nameStyle lastObject];
+			for (NSString* styles in [UIFont fontNamesForFamilyName:fontFamily]) {
+				if ([styles containsString:fontStyle]) {
+					result = [UIFont fontWithName:styles size:fontSize];
+					break;
+				}
+			}
+		}
+	}
+	if (!result) {
+		// Fonts not recognized.
+		result = [UIFont systemFontOfSize:fontSize];
+	}
+	return result;
 }
 
 @end
