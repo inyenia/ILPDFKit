@@ -58,7 +58,7 @@
         _dictionary = leaf;
         id value = [leaf inheritableValueForKey:@"V"];
 		_value = [value isKindOfClass:PDFString.class] ? [value textString]:value;
-		if (_value.length == 0) {
+		if ([_value respondsToSelector:@selector(length)] && _value.length == 0) {
 			CGPDFDictionaryRef aDict = leaf.dict;
 			CGPDFStringRef objectString;
 			if(CGPDFDictionaryGetString(aDict, "V", &objectString)) {
