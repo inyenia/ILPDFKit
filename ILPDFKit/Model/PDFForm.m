@@ -281,7 +281,7 @@
     }
     /*
      vwidth-2*xmargin = pixel width of canvas on screen for full screen scaled page
-     xmargin = pixel width of grey border between canvas and edge of UIWebView for full scaled page.
+     xmargin = pixel width of grey border between canvas and edge of WKWebView for full scaled page.
      maxWidth = PDF canvas points of widest page;
      ((vwidth-2*xmargin)/maxWidth) = converstion factor from canvas space to device space.
      Thus hmargin is the horizonal pixel margin from the border of the screen to the beginning of the page canvas.

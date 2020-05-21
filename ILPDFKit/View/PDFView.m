@@ -24,7 +24,7 @@
 #import "PDFFormButtonField.h"
 #import "PDF.h"
 
-@interface PDFView(Delegates) <UIScrollViewDelegate,UIGestureRecognizerDelegate,UIWebViewDelegate>
+@interface PDFView(Delegates) <UIScrollViewDelegate,UIGestureRecognizerDelegate, WKNavigationDelegate>
 @end
 
 @interface PDFView(Private)
@@ -41,11 +41,10 @@
     self = [super initWithFrame:frame];
     if (self) {
         CGRect contentFrame = CGRectMake(0, 0, frame.size.width, frame.size.height);
-        _pdfView = [[UIWebView alloc] initWithFrame:contentFrame];
-        _pdfView.scalesPageToFit = YES;
+        _pdfView = [[WKWebView alloc] initWithFrame:contentFrame];
         _pdfView.scrollView.delegate = self;
         _pdfView.scrollView.bouncesZoom = NO;
-        _pdfView.delegate = self;
+        _pdfView.navigationDelegate = self;
         _pdfView.autoresizingMask =  UIViewAutoresizingFlexibleHeight|UIViewAutoresizingFlexibleWidth|UIViewAutoresizingFlexibleTopMargin|UIViewAutoresizingFlexibleLeftMargin;
          self.autoresizingMask =  UIViewAutoresizingFlexibleHeight|UIViewAutoresizingFlexibleWidth|UIViewAutoresizingFlexibleTopMargin|UIViewAutoresizingFlexibleLeftMargin;
         [self addSubview:_pdfView];
@@ -66,7 +65,7 @@
         if ([dataOrPath isKindOfClass:[NSString class]]) {
             [_pdfView loadRequest:[NSURLRequest requestWithURL:[NSURL fileURLWithPath:dataOrPath]]];
         } else if([dataOrPath isKindOfClass:[NSData class]]) {
-            [_pdfView loadData:dataOrPath MIMEType:@"application/pdf" textEncodingName:@"NSASCIIStringEncoding" baseURL:nil];
+			[_pdfView loadData:dataOrPath MIMEType:@"application/pdf" characterEncodingName:@"NSASCIIStringEncoding" baseURL:nil];
         }
 
         UITapGestureRecognizer *tapGestureRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:nil action:NULL];
@@ -102,10 +101,10 @@
     if (_canvasLoaded) [self fadeInWidgetAnnotations];
 }
 
-#pragma mark - UIWebViewDelegate
+#pragma mark - WKWebViewDelegate
 
-- (void)webViewDidFinishLoad:(UIWebView *)webView {
-    _canvasLoaded = YES;
+- (void)webView:(WKWebView *)webView didFinishNavigation:(WKNavigation *)navigation {
+	_canvasLoaded = YES;
     if (_pdfWidgetAnnotationViews) {
         [self fadeInWidgetAnnotations];
     }

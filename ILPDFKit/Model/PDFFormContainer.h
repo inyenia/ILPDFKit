@@ -94,8 +94,8 @@
 /** Returns an array of UIView based objects representing the forms.
  
  @param width The width of the superview to add the resulting views as subviews.
- @param margin The left and right margin of the superview with respect to the PDF canvas portion of the UIWebView.
- @param hmargin The top margin of the superview with respect to the PDF canvas portion of the UIWebView.
+ @param margin The left and right margin of the superview with respect to the PDF canvas portion of the WKWebView.
+ @param hmargin The top margin of the superview with respect to the PDF canvas portion of the WKWebView.
  @return An NSArray containing the resulting views. You are responsible for releasing the array.
  */
 - (NSArray *)createWidgetAnnotationViewsForSuperviewWithWidth:(CGFloat)width margin:(CGFloat)margin hMargin:(CGFloat)hmargin;
